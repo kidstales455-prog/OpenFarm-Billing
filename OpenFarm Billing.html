@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Open Farm Billing</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f4f1e6;--card:#fff;--tx:#14261a;--mut:#6b7a6f;--g:#12301c;--gold:#c9a227;--bd:#ddd8c4;--red:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1a11;--card:#16271b;--tx:#eef2e8;--mut:#9fb0a2;--bd:#2a3e2f;--g:#0a2012}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px system-ui,Segoe UI,Arial,sans-serif}
+header{background:#12301c;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+header b{font-size:20px}header span{color:var(--gold);font-size:12px;letter-spacing:2px}
+nav button{background:none;border:1px solid var(--gold);color:#fff;padding:6px 12px;border-radius:8px;margin-left:6px;cursor:pointer}
+nav button.on{background:var(--gold);color:#12301c;font-weight:700}
+main{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;padding:12px;max-width:1200px;margin:auto}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
+input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font-size:15px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0}
+.chip{white-space:nowrap;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:6px 12px;border-radius:99px;cursor:pointer}
+.chip.on{background:#12301c;color:#fff;border-color:#12301c}
+.item{padding:8px 0;border-top:1px solid var(--bd)}
+.item .n{font-weight:600}
+.packs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pk{border:1px solid var(--gold);background:none;color:var(--tx);border-radius:8px;padding:6px 10px;cursor:pointer;text-align:left;font-size:13px}
+.pk:active{background:var(--gold)}.pk s{color:var(--mut)}
+.list{max-height:62vh;overflow-y:auto}
+.row{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:1px solid var(--bd)}
+.row .t{flex:1}.row small{color:var(--mut);display:block}
+.q{width:28px;height:28px;border-radius:50%;border:1px solid var(--bd);background:none;color:var(--tx);cursor:pointer;font-size:16px}
+.tot{font-size:22px;font-weight:800}.sv{color:#1b7a3a;font-weight:600}
+.btn{display:block;text-align:center;text-decoration:none;border:0;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;width:100%}
+.wa{background:#25d366;color:#04210f}.sm{background:var(--gold);color:#12301c}.gr{background:#12301c;color:#fff}.ot{background:none;border:1px solid var(--bd);color:var(--tx)}
+.dis{opacity:.45;pointer-events:none}
+.hide{display:none}.mut{color:var(--mut);font-size:13px}
+table{width:100%;border-collapse:collapse}td,th{padding:6px;border-top:1px solid var(--bd);text-align:left}
+.sc{overflow-x:auto}
+@media print{header,#left,.noprint{display:none!important}main{display:block}}
+</style></head><body>
+<header><div><b>OPEN FARM</b> <span>NATURAL STORE</span></div>
+<nav><button id="tb" class="on">Billing</button><button id="th">Bill history</button></nav></header>
+
+<main id="billing">
+<div class="card" id="left">
+<input id="q" placeholder="Search item (jeera, badam, ragi...)" autocomplete="off">
+<div class="chips" id="chips"></div>
+<div class="list" id="items"></div>
+<details style="margin-top:8px"><summary class="mut">+ Add item not in list</summary>
+<div style="display:grid;gap:6px;margin-top:6px"><input id="cn" placeholder="Item name"><input id="cm" type="number" placeholder="MRP Rs"><input id="co" type="number" placeholder="Offer price Rs">
+<button class="btn ot" id="cadd" style="margin:0">Add to bill</button></div></details>
+</div>
+
+<div class="card">
+<b>Current bill</b> <span class="mut" id="bno"></span>
+<div id="cart"></div>
+<div style="margin-top:8px">MRP total: <s id="mrp"></s></div>
+<div class="tot">Pay: Rs <span id="tot">0</span></div>
+<div class="sv" id="sv"></div>
+<div style="display:grid;gap:6px;margin-top:10px">
+<input id="cname" placeholder="Customer name (optional)">
+<input id="cph" type="tel" inputmode="numeric" placeholder="Customer mobile number" maxlength="13"></div>
+<a class="btn wa dis" id="wa" target="_blank" rel="noopener">Send bill on WhatsApp</a>
+<a class="btn sm dis" id="sms">Send bill by SMS</a>
+<button class="btn gr" id="save">Save bill and start new</button>
+<button class="btn ot noprint" id="prt">Print bill</button>
+<button class="btn ot noprint" id="clr">Clear bill</button>
+<div class="mut" id="msg" style="margin-top:6px"></div>
+</div>
+</main>
+
+<main id="hist" class="hide" style="display:none"><div class="card" style="grid-column:1/-1">
+<b>Saved bills</b> <span class="mut">(stored on this device)</span>
+<div id="today" style="margin:8px 0"></div>
+<div class="sc"><table id="ht"></table></div>
+<button class="btn ot" id="exp" style="max-width:240px">Copy all bills as CSV</button>
+<button class="btn ot" id="del" style="max-width:240px">Delete all history</button>
+</div></main>
+
+<script>
+// Catalogue: Category | Item ~ pack:MRP:Offer, ...
+var RAW=`Spices|Menthulu (Fenugreek)~100g:32:25,50g:19:15
+Spices|Jeera~100g:50:40,50g:25:20
+Spices|Coriander seed~100g:38:30
+Spices|Mustard seed~100g:25:20
+Spices|Sesame seed~100g:32:25
+Spices|Bagara mix~Pack:38:30
+Spices|Miryalu (small)~Pack:13:10
+Spices|Miryalu (big)~Pack:38:30
+Spices|Voma (Ajwain)~50g:25:20
+Spices|Sesame seeds~50g:15:12
+Spices|Mustard~50g:13:10
+Powders|Carrot powder~150g:248:198,250g:399:319
+Powders|Moringa powder~150g:269:215,250g:394:315
+Powders|Beetroot powder~150g:288:230,250g:437:349
+Powders|Amla powder~150g:249:199,250g:399:319
+Powders|Onion powder~150g:249:199,250g:312:249
+Powders|Banana powder~150g:219:175,250g:363:290
+Powders|Lemon powder~150g:160:128,250g:263:210
+Powders|ABC powder~250g:394:315
+Dry Fruits|Badam~100g:174:139,200g:337:269,400g:662:529,1kg:1624:1299
+Dry Fruits|Kaju~100g:137:109,200g:263:210,400g:513:410,1kg:1275:1020
+Dry Fruits|Walnuts~100g:224:179,200g:438:350,400g:875:700,1kg:2188:1750
+Dry Fruits|Kismis (premium)~100g:69:55,200g:125:100,400g:238:190,1kg:588:470
+Dry Fruits|Pista~100g:437:349,200g:850:680,400g:1688:1350,1kg:4225:3380
+Dry Fruits|Angeera (Fig)~100g:187:149,200g:357:285
+Dry Fruits|Spirulina~150g:437:349
+Dry Fruits|Dry fruit mix~20g:32:25,40g:57:45
+Dry Fruits|Kismis (pack)~50g:32:25,100g:62:49
+Dry Fruits|Makhana~250g:363:290
+Seeds|Flax seeds~100g:37:29,200g:69:55
+Seeds|Basil seeds (premium)~100g:44:35,200g:82:65
+Seeds|Chia seeds (premium)~100g:57:45,200g:105:84
+Seeds|Watermelon seeds (premium)~100g:119:95,200g:225:180
+Seeds|Pumpkin seeds (premium)~100g:119:95,200g:225:180
+Seeds|Sunflower seeds (premium)~100g:49:39,200g:87:69
+Seeds|Pumpkin seeds (pack)~50g:53:42,100g:107:85,200g:212:169
+Seeds|Watermelon seeds (pack)~50g:53:42,100g:107:85,200g:212:169
+Seeds|Sunflower seeds (pack)~50g:25:20,100g:37:29,200g:74:59
+Seeds|Chia seeds (pack)~50g:25:20,100g:44:35,200g:87:69
+Seeds|Basil seeds (pack)~50g:25:20,100g:38:30,200g:75:60
+Seeds|Beera seeds~100g:57:45
+Dates|Seedless dates~Pack:150:120
+Dates|Fresh dates~Pack:263:210
+Dates|Dry dates~100g:49:39
+Millets|Jowar~500g:69:55
+Millets|Ragi~500g:38:30
+Millets|Bajra~500g:38:30
+Millets|Foxtail~500g:57:45
+Millets|Jowar flour~500g:88:70
+Millets|Ragi flour~500g:50:40`;
+var CAT=[],ITEMS=[];
+RAW.split("\n").forEach(function(l){var a=l.split("|"),b=a[1].split("~");
+ if(CAT.indexOf(a[0])<0)CAT.push(a[0]);
+ ITEMS.push({c:a[0],n:b[0],p:b[1].split(",").map(function(s){var x=s.split(":");return{k:x[0],m:+x[1],o:+x[2]}})})});
+
+function ld(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+var $=function(i){return document.getElementById(i)};
+var cart=ld("of_cart",[]),hist=ld("of_hist",[]),cat="All",seq=ld("of_seq",1);
+var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+
+function chips(){$("chips").innerHTML=["All"].concat(CAT).map(function(c){return '<button class="chip'+(c==cat?' on':'')+'" data-c="'+c+'">'+c+'</button>'}).join("")}
+function items(){var q=$("q").value.toLowerCase().trim(),h="";
+ ITEMS.forEach(function(it,i){if(cat!="All"&&it.c!=cat)return;if(q&&it.n.toLowerCase().indexOf(q)<0)return;
+  h+='<div class="item"><div class="n">'+esc(it.n)+' <span class="mut">'+it.c+'</span></div><div class="packs">'+
+  it.p.map(function(p,j){return '<button class="pk" data-i="'+i+'" data-j="'+j+'">'+p.k+'<br><s>Rs '+p.m+'</s> <b>Rs '+p.o+'</b></button>'}).join("")+'</div></div>'});
+ $("items").innerHTML=h||'<p class="mut">No items found</p>'}
+
+function add(name,pack,m,o){var k=name+"|"+pack;
+ var f=cart.filter(function(x){return x.k==k})[0];
+ if(f)f.q++;else cart.push({k:k,n:name,pk:pack,m:m,o:o,q:1});render()}
+
+function money(n){return Math.round(n*100)/100}
+function totals(){var t=0,m=0;cart.forEach(function(x){t+=x.o*x.q;m+=x.m*x.q});return{t:money(t),m:money(m),s:money(m-t)}}
+function phone(){var d=$("cph").value.replace(/\D/g,"");if(d.length==10)d="91"+d;if(d.length==11&&d[0]=="0")d="91"+d.slice(1);return d}
+function billText(no){var T=totals(),d=new Date();
+ var s="*OPEN FARM NATURAL STORE*\n_Straight from the Soil_\n";
+ s+="Bill #"+no+"  "+d.toLocaleDateString("en-IN")+" "+d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})+"\n";
+ if($("cname").value.trim())s+="Customer: "+$("cname").value.trim()+"\n";
+ s+="------------------------\n";
+ cart.forEach(function(x){s+=x.n+" ("+x.pk+")\n   "+x.q+" x Rs "+x.o+" = Rs "+money(x.q*x.o)+"\n"});
+ s+="------------------------\nMRP total: Rs "+T.m+"\nDiscount: Rs "+T.s+"\n*TOTAL PAID: Rs "+T.t+"*\n\nThank you! Visit again.";
+ return s}
+
+function render(){sv("of_cart",cart);
+ $("bno").textContent="Bill #"+seq;
+ $("cart").innerHTML=cart.length?cart.map(function(x,i){return '<div class="row"><div class="t">'+esc(x.n)+'<small>'+esc(x.pk)+' | Rs '+x.o+' <s>Rs '+x.m+'</s></small></div>'+
+  '<button class="q" data-a="-" data-i="'+i+'">-</button><b>'+x.q+'</b><button class="q" data-a="+" data-i="'+i+'">+</button><b style="width:62px;text-align:right">'+money(x.o*x.q)+'</b></div>'}).join(""):'<p class="mut">Tap an item pack on the left to add it.</p>';
+ var T=totals();$("tot").textContent=T.t;$("mrp").textContent="Rs "+T.m;$("sv").textContent=T.s>0?"Customer saves Rs "+T.s:"";
+ var ok=cart.length&&phone().length>=11,txt=encodeURIComponent(billText(seq));
+ var w=$("wa"),s=$("sms");
+ w.className="btn wa"+(ok?"":" dis");s.className="btn sm"+(ok?"":" dis");
+ if(ok){w.href="https://wa.me/"+phone()+"?text="+txt;s.href="sms:+"+phone()+"?&body="+txt}
+ else{w.removeAttribute("href");s.removeAttribute("href")}}
+
+function saveBill(){if(!cart.length){$("msg").textContent="Bill is empty.";return false}
+ var T=totals();
+ hist.unshift({no:seq,at:Date.now(),name:$("cname").value.trim(),ph:phone(),t:T.t,m:T.m,s:T.s,
+  items:cart.map(function(x){return x.n+" ("+x.pk+") x"+x.q}).join("; ")});
+ sv("of_hist",hist);seq++;sv("of_seq",seq);cart=[];$("cname").value="";$("cph").value="";
+ $("msg").textContent="Bill saved.";render();return true}
+
+function showHist(){var h='<tr><th>#</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th></tr>',td=0,n=0,ds=new Date().toDateString();
+ hist.forEach(function(b){var d=new Date(b.at);if(d.toDateString()==ds){td+=b.t;n++}
+  h+='<tr><td>'+b.no+'</td><td>'+d.toLocaleDateString("en-IN")+'</td><td>'+esc(b.name||"-")+'<br><span class="mut">'+esc(b.ph||"")+'</span></td><td>'+esc(b.items)+'</td><td>Rs '+b.t+'</td></tr>'});
+ $("ht").innerHTML=h;$("today").innerHTML="Today: <b>"+n+" bills, Rs "+money(td)+"</b>"}
+
+function tab(h){$("billing").style.display=h?"none":"";$("hist").style.display=h?"":"none";$("tb").className=h?"":"on";$("th").className=h?"on":"";if(h)showHist()}
+
+$("tb").onclick=function(){tab(false)};$("th").onclick=function(){tab(true)};
+$("chips").onclick=function(e){var c=e.target.getAttribute("data-c");if(c){cat=c;chips();items()}};
+$("q").oninput=items;
+$("items").onclick=function(e){var b=e.target.closest(".pk");if(!b)return;var it=ITEMS[+b.dataset.i],p=it.p[+b.dataset.j];add(it.n,p.k,p.m,p.o)};
+$("cart").onclick=function(e){var b=e.target.closest(".q");if(!b)return;var i=+b.dataset.i;cart[i].q+=b.dataset.a=="+"?1:-1;if(cart[i].q<1)cart.splice(i,1);render()};
+$("cadd").onclick=function(){var n=$("cn").value.trim(),m=+$("cm").value,o=+$("co").value;if(!n||!o)return;add(n,"custom",m||o,o);$("cn").value=$("cm").value=$("co").value=""};
+$("cph").oninput=render;$("cname").oninput=render;
+$("save").onclick=saveBill;
+$("clr").onclick=function(){cart=[];render()};
+$("prt").onclick=function(){try{window.print()}catch(e){}};
+$("del").onclick=function(){if(confirm("Delete ALL saved bills on this device?")){hist=[];sv("of_hist",hist);showHist()}};
+$("exp").onclick=function(){var c="Bill,Date,Customer,Phone,Items,MRP,Discount,Total\n"+hist.map(function(b){return [b.no,new Date(b.at).toLocaleString("en-IN"),b.name,b.ph,b.items,b.m,b.s,b.t].map(function(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'}).join(",")}).join("\n");
+ try{navigator.clipboard.writeText(c);alert("Copied. Paste into Excel or Google Sheets.")}catch(e){prompt("Copy this:",c)}};
+chips();items();render();
+</script></body></html>
